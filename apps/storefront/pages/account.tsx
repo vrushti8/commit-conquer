@@ -108,6 +108,10 @@ export default function AccountPage() {
 
   const logout = () => {
     localStorage.removeItem("cc_token");
+    ["checkout", "stripe", "payment"].forEach((k) => {
+      localStorage.removeItem(k);
+      sessionStorage.removeItem(k);
+    });
     setToken(null); setCustomer(null); setMode("login");
   };
 

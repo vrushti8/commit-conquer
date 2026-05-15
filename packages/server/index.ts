@@ -207,6 +207,19 @@ store.post("/auth/login", async (req, res) => {
 store.post("/auth/logout", authenticate, async (req, res) => {
   try {
     const token = req.headers.authorization!.slice(7);
+    
+    if (req.customer) {
+      const orders = OrderService.list({ customer_id: req.customer.id }).data;
+      for (const order of orders) {
+        if (order.status === "pending" || order.payment_status === "awaiting") {
+          const session = PaymentService.getSessionByOrderId(order.id);
+          if (session && session.status === "pending") {
+            await PaymentService.cancelSession(session.id, order.id);
+          }
+        }
+      }
+    }
+
     await AuthService.logout(token);
     res.json({ success: true });
   } catch (e) { handleErr(e, res); }

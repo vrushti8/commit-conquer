@@ -308,7 +308,7 @@ export const CartService = {
   } {
     const cart = CartService.get(cartId);
     return {
-      item_count:      cart.items.reduce((s, i) => s + i.quantity, 0),
+      item_count:      cart.items.reduce((s, i) => s + (Number(i.quantity) || 0), 0),
       subtotal:        cart.subtotal,
       discount_amount: cart.discount_amount,
       shipping_total:  cart.shipping_total,
@@ -322,10 +322,11 @@ export const CartService = {
 
 function _recalc(cart: Cart): Cart {
   
-  const subtotal = cart.items.reduce((sum, item) => {
-    const price = Number.isFinite(item.price) ? item.price : 0;
-    return sum + (price * item.quantity);
-  }, 0);
+  const subtotal = cart.items.reduce(
+    (sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 0),
+    0,
+  );
+
   
   let discountAmount = 0;
   if (cart.discount_code) {

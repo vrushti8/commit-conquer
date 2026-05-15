@@ -141,6 +141,19 @@ export function CartProvider({ children }) {
     toggleCart: (open) => setIsOpen(open ?? !isOpen),
   }), [addItemMut, removeItemMut, updateQtyMut, clearCartMut, isOpen, cartData]);
 
+  const [state, dispatch] = useReducer(cartReducer, { items: [], isOpen: false });
+  const derived = {
+    ...state,
+    count: state.items.reduce((n, i) => n + i.quantity, 0),
+    total: state.items.reduce((s, i) => s + i.price * i.quantity, 0),
+  };
+function CartProvider({ children }) {
+  const [state, dispatch] = useReducer(cartReducer, { items: [], isOpen: false });
+  const derived = {
+    ...state,
+    count: state.items.reduce((n, i) => n + (Number(i.quantity) || 0), 0),
+    total: state.items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0),
+  };
   return (
     <CartStateCtx.Provider value={state}>
       <CartDispatchCtx.Provider value={dispatch}>

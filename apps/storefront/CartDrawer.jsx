@@ -72,7 +72,7 @@ function CartItem({ item }) {
         {item.size  && <p style={s.meta}>Size: {item.size}</p>}
         {item.color && <p style={s.meta}>Color: {item.color}</p>}
         <p style={{ fontWeight: 700, fontSize: 14, marginTop: 4 }}>
-          ${((item.price * item.quantity) / 100).toFixed(2)}
+          ${((Number(item.price) || 0) * (Number(item.quantity) || 0)).toFixed(2)}
         </p>
         <div style={s.qtyRow}>
           <button style={s.qtyBtn} onClick={() => dispatch.updateQty({ ...key, quantity: item.quantity - 1 })}>−</button>
