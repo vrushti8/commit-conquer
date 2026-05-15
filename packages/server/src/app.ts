@@ -6,6 +6,7 @@ import express, { Request, Response } from 'express';
 import { UserService } from './services/userService';
 import { CommitService } from './services/commitService';
 import { LeaderboardService } from './services/leaderboardService';
+import { NotificationService } from './services/notificationService';
 import { UserController } from './controllers/userController';
 import { CommitController } from './controllers/commitController';
 import { authenticate } from './middleware/authenticate';
@@ -19,6 +20,7 @@ export function createApp() {
   const userService       = new UserService();
   const commitService     = new CommitService();
   const leaderboardService = new LeaderboardService();
+  new NotificationService();
 
   const userController   = new UserController(userService);
   const commitController = new CommitController(commitService);

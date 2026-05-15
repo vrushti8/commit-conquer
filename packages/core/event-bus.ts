@@ -52,6 +52,7 @@ export const EVENT = {
   CUSTOMER_LOGGED_IN:     "customer.logged_in",
   CUSTOMER_LOGGED_OUT:    "customer.logged_out",
   PASSWORD_RESET:         "customer.password_reset",
+  USER_RANK_CHANGED:      "user.rank_changed",
 
   // Shipping events
   SHIPMENT_CREATED:       "shipment.created",
@@ -97,6 +98,16 @@ export interface EventPayloadMap {
   [EVENT.CUSTOMER_LOGGED_IN]:     { customer_id: string };
   [EVENT.CUSTOMER_LOGGED_OUT]:    { customer_id: string };
   [EVENT.PASSWORD_RESET]:         { customer_id: string; email: string };
+  [EVENT.USER_RANK_CHANGED]:      {
+    user_id: string;
+    email: string;
+    old_rank: number;
+    new_rank: number;
+    triggered_by_user_id: string;
+    triggered_by_username: string;
+    overtaken_by_user_id?: string;
+    overtaken_by_username?: string;
+  };
 
   [EVENT.SHIPMENT_CREATED]:       { order_id: string; tracking_number: string; carrier: string };
   [EVENT.SHIPMENT_UPDATED]:       { order_id: string; status: string };

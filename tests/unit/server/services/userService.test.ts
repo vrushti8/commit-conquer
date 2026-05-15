@@ -3,6 +3,7 @@
  * Covers: findAll, findById, register, login, addPoints
  */
 
+import { eventBus, EVENT } from '../../../../packages/core/event-bus';
 import { UserService } from '../../../../packages/server/src/services/userService';
 import { mockUsers } from '../../../fixtures/users';
 
@@ -167,6 +168,25 @@ describe('UserService', () => {
     it('throws 404 AppError when user does not exist', async () => {
       await expect(service.addPoints('ghost', 5))
         .rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it('emits a rank change event for users overtaken when another user scores', async () => {
+      const emitSpy = jest.spyOn(eventBus, 'emit').mockResolvedValue(undefined);
+
+      await service.addPoints('user-2', 30);
+
+      expect(emitSpy).toHaveBeenCalledWith(
+        EVENT.USER_RANK_CHANGED,
+        expect.objectContaining({
+          user_id: 'user-1',
+          old_rank: 1,
+          new_rank: 2,
+          triggered_by_user_id: 'user-2',
+          triggered_by_username: 'bob',
+        }),
+      );
+
+      emitSpy.mockRestore();
     });
   });
 });

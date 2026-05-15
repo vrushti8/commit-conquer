@@ -5,6 +5,7 @@
 import { AppError } from '../middleware/errorHandler';
 import { isValidEmail } from '../utils/validators';
 import { hashString, generateToken } from '../utils/crypto';
+import { eventBus, EVENT } from '../../../core/event-bus';
 
 export interface User {
   id: string;
@@ -86,10 +87,60 @@ export class UserService {
     return { user: toPublic(user), token: generateToken(user.id) };
   }
 
+  private buildRankSnapshot(users: User[]) {
+    const sorted = [...users].sort((a, b) => {
+      if (b.totalPoints !== a.totalPoints) {
+        return b.totalPoints - a.totalPoints;
+      }
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
+
+    const map = new Map<string, {
+      rank: number;
+      totalPoints: number;
+      username: string;
+    }>();
+
+    sorted.forEach((user, index) => {
+      map.set(user.id, {
+        rank: index + 1,
+        totalPoints: user.totalPoints,
+        username: user.username,
+      });
+    });
+
+    return { sorted, map };
+  }
+
   async addPoints(id: string, points: number): Promise<PublicUser> {
     const user = store.find((u) => u.id === id);
     if (!user) throw new AppError(`User ${id} not found`, 404);
+
+    const beforeSnapshot = this.buildRankSnapshot(store);
     user.totalPoints += points;
+    const afterSnapshot = this.buildRankSnapshot(store);
+    const triggerUser = afterSnapshot.sorted.find((u) => u.id === id)!;
+
+    for (const [userId, afterInfo] of afterSnapshot.map.entries()) {
+      const beforeInfo = beforeSnapshot.map.get(userId);
+      if (!beforeInfo) continue;
+      if (afterInfo.rank <= beforeInfo.rank) continue;
+
+      const overtakenBy = afterSnapshot.sorted[afterInfo.rank - 2];
+      const overtakenUser = store.find((u) => u.id === userId)!;
+
+      await eventBus.emit(EVENT.USER_RANK_CHANGED, {
+        user_id: userId,
+        email: overtakenUser.email,
+        old_rank: beforeInfo.rank,
+        new_rank: afterInfo.rank,
+        triggered_by_user_id: triggerUser.id,
+        triggered_by_username: triggerUser.username,
+        overtaken_by_user_id: overtakenBy?.id,
+        overtaken_by_username: overtakenBy?.username,
+      });
+    }
+
     return toPublic(user);
   }
 }
